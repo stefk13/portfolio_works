@@ -1,0 +1,155 @@
+version: '3.8'
+services:
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    container_name: zipkin-assignment2
+    depends_on:
+      - api-gateway
+    networks:
+      - spring
+
+  api-gateway:
+    image: api-gateway
+    ports:
+      - "8181:8181"
+    build:
+      context: ./api-gateway
+      dockerfile: ./Dockerfile
+    container_name: api-gateway1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8761/eureka/
+    depends_on:
+      - discovery-service
+    networks:
+      - spring
+
+  discovery-service:
+    image: discovery-service
+    ports:
+      - "8761:8761"
+    build:
+      context: ./discovery-service
+      dockerfile: ./Dockerfile
+    container_name: discovery-service1
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.instance.hostname: discovery-service
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8761/eureka/
+    networks:
+      - spring
+
+  comment-service:
+    image: comment
+    ports:
+      - "8081:8081"
+    build:
+      context: ./Comment
+      dockerfile: ./Dockerfile
+    container_name: comment-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8761/eureka/
+    depends_on:
+      - postgres-comment-service
+    networks:
+      - spring
+
+  user-service:
+    image: user
+    ports:
+      - "8082:8082"
+    build:
+      context: ./User
+      dockerfile: ./Dockerfile
+    container_name: user-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8761/eureka/
+    depends_on:
+      - postgres-user-service
+    networks:
+      - spring
+
+  post-service:
+    image: post
+    ports:
+      - "8989:8989"
+    build:
+      context: ./Post
+      dockerfile: ./Dockerfile
+    container_name: post-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      eureka.client.serviceUrl.defaultZone: http://discovery-service:8761/eureka/
+    depends_on:
+      - mongodb
+    networks:
+      - spring
+
+  postgres-comment-service:
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - "5434:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=comment-service
+    volumes:
+      - ./data/postgres/comment-service:/var/lib/postgresql/data
+      - ./init/commet-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgresdb-comment-service
+
+  postgres-user-service:
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=user-service
+    volumes:
+      - ./data/postgres/user-service:/var/lib/postgresql/data
+      - ./init/user-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    container_name: postgresdb-user-service
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "8888:80"
+    container_name: pgadmin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.ca
+      - PGADMIN_DEFAULT_PASSWORD=password
+    restart: unless-stopped
+    networks:
+      - spring
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    container_name: mongodb
+    build:
+      context: ./Post
+      dockerfile: ./Dockerfile
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=rootadmin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    volumes:
+      - ./data/mongo/post:/data/db
+      - ./init/mongo/docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    restart: unless-stopped
+    command: mongod --auth
+    networks:
+      - spring
+
+networks:
+  spring:
+    driver: bridge

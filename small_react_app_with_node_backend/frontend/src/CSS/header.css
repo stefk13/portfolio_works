@@ -1,0 +1,45 @@
+
+.header {
+    background-color: rgb(9, 49, 70);
+    padding: 10px;
+    color: white;
+  }
+  
+  .header nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .header nav a {
+    text-decoration: none;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    font-size: larger;
+    padding: 10px;
+    margin: 0;
+  }
+  
+  .header nav a:hover {
+    background-color: #555;
+  }
+  
+  .header nav div {
+    display: flex;
+    align-items: center;
+  }
+  
+  .header nav div a {
+    text-decoration: none;
+    color: white;
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    padding: 10px;
+    margin: 0;
+  }
+  
+  .header nav div a:hover {
+    background-color: #555;
+  }
+  
